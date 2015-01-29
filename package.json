@@ -1,12 +1,12 @@
 {
   "name": "microsvc-master",
   "version": "0.0.0",
-  "description": "",
+  "description": "simple module to make your microservice a master with ability to track slaves",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "mattwalters5@gmail.com",
   "license": "ISC",
   "dependencies": {
     "debug": "^2.1.1",
