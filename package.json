@@ -1,6 +1,6 @@
 {
   "name": "microsvc-master",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "simple module to make your microservice a master with ability to track slaves",
   "main": "index.js",
   "scripts": {
@@ -9,10 +9,10 @@
   "author": "mattwalters5@gmail.com",
   "license": "ISC",
   "dependencies": {
-    "debug": "^2.1.1",
-    "mocha": "^2.1.0"
+    "debug": "^2.1.1"
   }, 
   "devDependencies": {
+    "mocha": "^2.1.0",
     "should": "^4.6.2"
   }
 }

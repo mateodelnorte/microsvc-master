@@ -5,6 +5,7 @@ var util = require('util');
 function Master () {
   this.channel = new events.EventEmitter();
   this.heartbeatFrequency = 1000;
+  this.heartbeatAllowedLag = this.heartbeatFrequency + 1;
   this.slaves = {};
   events.EventEmitter.apply(this);
 }
@@ -15,7 +16,17 @@ Master.prototype.configure = function configure (fn) {
   fn(this);
 };
 
-Master.prototype.initialize = function initialize () {
+Master.prototype.initialize = function initialize (options) {
+  options = options || {};
+
+  if (options.heartbeatFrequency) {
+    this.heartbeatFrequency = options.heartbeatFrequency;
+  }
+
+  if (options.heartbeatAllowedLag) {
+    this.heartbeatAllowedLag = options.heartbeatAllowedLag;
+  }
+
   this.channel.on('slave.heartbeat', this._slaveHearbeat.bind(this));
   this.channel.on('slave.offline', this._slaveOffline.bind(this));
   this.channel.on('slave.online', this._slaveOnline.bind(this));
@@ -39,8 +50,9 @@ Master.prototype._checkForPulse = function _checkForPulse (now, slaveId) {
 
   var elapsedMs = slave.lastHeartbeat.getTime() - now.getTime();
 
-  if (Math.abs(elapsedMs) > this.heartbeatFrequency + 1) {
+  if (Math.abs(elapsedMs) > this.heartbeatAllowedLag) {
     this._removeSlave(slave);
+    debug('slave lost %j', slave);
     this.emit('slave.lost', slave);
   }
 };
@@ -51,26 +63,44 @@ Master.prototype._heartbeat = function _heartbeat () {
   slaveIds.forEach(this._checkForPulse.bind(this, new Date()));
 };
 
-Master.prototype._removeSlave = function _removeSlave (slave) {
-  delete this.slaves[slave.id];
-  this.emit('slave.offline', slave);
+Master.prototype._parseHeartbeatPayload = function _parseHeartbeatPayload (payload) {
+  return payload;
 };
 
-Master.prototype._slaveHearbeat = function _slaveHearbeat (slave) {
+Master.prototype._parseOfflinePayload = function _parseOfflinePayload (payload) {
+  return payload;
+};
+
+Master.prototype._parseOnlinePayload = function _parseOnlinePayload (payload) {
+  return payload;
+};
+
+Master.prototype._removeSlave = function _removeSlave (slave) {
+  delete this.slaves[slave.id];
+  debug('slave offline %j', slave);
+};
+
+Master.prototype._slaveHearbeat = function _slaveHearbeat (payload) {
+  var slave = this._parseHeartbeatPayload(payload);
   debug('slave heartbeat %j', slave);
   slave.lastHeartbeat = new Date();
   this.slaves[slave.id] = slave;
+  this.emit('slave.heartbeat', slave);
 };
 
-Master.prototype._slaveOffline = function _slaveOffline (slave) {
+Master.prototype._slaveOffline = function _slaveOffline (payload) {
+  var slave = this._parseOfflinePayload(payload);
   debug('slave offline %j', slave);
   this._removeSlave(slave);
+  this.emit('slave.offline', slave);
 };
 
-Master.prototype._slaveOnline = function _slaveOnline (slave) {
+Master.prototype._slaveOnline = function _slaveOnline (payload) {
+  var slave = this._parseOnlinePayload(payload);
   debug('slave online %j', slave);
-  this._slaveHearbeat(slave);
-  this.emit('slave.online');
+  slave.lastHeartbeat = new Date();
+  this.slaves[slave.id] = slave;
+  this.emit('slave.online', slave);
 };
 
 Master.prototype._startHeartbeat = function _startHeartbeat () {

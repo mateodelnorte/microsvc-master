@@ -1,21 +1,22 @@
 var events = require('events');
+var localAdapter = require('../lib/localAdapter');
 var master = require('../index');
-var localChannel = require('../lib/localChannel');
 
 require('should');
 
 var slaver;
 
-describe('master - initialize', function () {
-  beforeEach(function () {
-    master.configure(function (master) {
-      slaver = localChannel(master);
-    });
-  });
-  afterEach(function () {
-    master.stop();
-  });
+describe('microsvc-master', function () {
+
   describe('on startup', function () {
+    beforeEach(function () {
+      master.configure(function (master) {
+        slaver = localAdapter(master);
+      });
+    });
+    afterEach(function () {
+      master.stop();
+    });
     it('should initialize and wait for slaves', function (done) {
       master.once('online', function () {
         done();
@@ -23,15 +24,12 @@ describe('master - initialize', function () {
       master.initialize();
     });
   });
-});
-
-describe('master - slave', function () {
 
   describe('at runtime', function () {
 
     beforeEach(function () {
       master.configure(function (master) {
-        slaver = localChannel(master);
+        slaver = localAdapter(master);
       });
       master.initialize();
     });
@@ -91,7 +89,6 @@ describe('master - slave', function () {
       });
       slave.offline();
     });
-    
-  })
 
+  });
 });
