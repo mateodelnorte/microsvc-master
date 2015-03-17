@@ -1,6 +1,6 @@
 {
   "name": "microsvc-master",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "simple module to make your microservice a master with ability to track slaves",
   "main": "index.js",
   "scripts": {
